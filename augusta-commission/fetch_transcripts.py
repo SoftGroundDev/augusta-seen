@@ -1,37 +1,48 @@
 # /// script
-# requires-python = ">=3.11"
+# requires-python = ">=3.10"
 # dependencies = [
 #     "yt-dlp[default,curl-cffi]",
-#     "mlx-whisper",
+#     "faster-whisper",
 # ]
 # ///
 """Transcribe Augusta, GA government meeting streams from YouTube.
 
-Downloads audio with yt-dlp and transcribes locally with mlx-whisper (Apple Silicon).
+Downloads audio with yt-dlp and transcribes locally with faster-whisper.
 
 Usage:
-    uv run augusta-commission/fetch_transcripts.py --limit 5
-    uv run augusta-commission/fetch_transcripts.py --video Iq43RtAF4ZM
+    .venv\\Scripts\\python augusta-commission\\fetch_transcripts.py --limit 5
+    .venv\\Scripts\\python augusta-commission\\fetch_transcripts.py --video Iq43RtAF4ZM
+    # GPU (needs nvidia-cublas-cu12 and nvidia-cudnn-cu12==9.* installed):
+    .venv\\Scripts\\python augusta-commission\\fetch_transcripts.py --device cuda
 """
 
 import argparse
+import os
 import re
 import tempfile
 import time
 from pathlib import Path
 
-import mlx_whisper
 import yt_dlp
+from faster_whisper import WhisperModel
 
 CHANNEL_STREAMS = "https://www.youtube.com/user/augustagagov/streams"
 OUT_DIR = Path(__file__).parent / "transcripts"
-MODEL = "mlx-community/whisper-large-v3-turbo"
+MODEL = "large-v3-turbo"
 YDL_BASE = {
     "quiet": True,
     "no_warnings": True,
     "noprogress": True,
     "js_runtimes": {"node": {}},
 }
+
+
+def add_cuda_dlls() -> None:
+    # CTranslate2 finds cuBLAS/cuDNN via PATH; pip installs them under site-packages/nvidia/*/bin.
+    import nvidia
+
+    dirs = [str(p) for base in nvidia.__path__ for p in Path(base).glob("*/bin")]
+    os.environ["PATH"] = os.pathsep.join(dirs + [os.environ.get("PATH", "")])
 
 
 def list_streams(limit: int) -> list[str]:
@@ -95,7 +106,7 @@ def write_transcript(info: dict, segments: list[dict]) -> Path:
     lines += [
         f"[{timestamp(s['start'])}] {s['text'].strip()}" for s in drop_repeats(segments)
     ]
-    path.write_text("\n".join(lines) + "\n")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return path
 
 
@@ -103,10 +114,15 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--limit", type=int, default=5, help="most recent N streams")
     parser.add_argument("--video", action="append", help="specific video ID (repeatable)")
+    parser.add_argument("--device", choices=["cpu", "cuda"], default="cpu")
     args = parser.parse_args()
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     video_ids = args.video or list_streams(args.limit)
+    if args.device == "cuda":
+        add_cuda_dlls()
+    compute_type = "float16" if args.device == "cuda" else "int8"
+    model = WhisperModel(MODEL, device=args.device, compute_type=compute_type)
 
     for video_id in video_ids:
         if already_done(video_id):
@@ -119,15 +135,16 @@ def main() -> None:
                 info, audio = download_audio(video_id, Path(tmp))
                 print(f"transcribe {info['title']} ({info.get('duration_string', '?')})", flush=True)
                 # Streams open with long silent/music pre-roll that Whisper hallucinates over.
-                result = mlx_whisper.transcribe(
+                segments, _ = model.transcribe(
                     str(audio),
-                    path_or_hf_repo=MODEL,
                     language="en",
                     condition_on_previous_text=False,
                     word_timestamps=True,
                     hallucination_silence_threshold=2.0,
                 )
-            path = write_transcript(info, result["segments"])
+                # segments is a lazy generator; consume it before the temp audio is deleted.
+                segments = [{"start": s.start, "text": s.text} for s in segments]
+            path = write_transcript(info, segments)
         except Exception as e:  # keep the batch going past unavailable/scheduled streams
             print(f"FAILED {video_id}: {e}", flush=True)
             continue
