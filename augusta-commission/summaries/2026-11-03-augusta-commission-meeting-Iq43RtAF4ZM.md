@@ -35,7 +35,7 @@ estimated_reading_time: 6
 | Add artificial Christmas tree addendum to agenda         | Consent without objection                        | Added                                                | [00:40:05] |
 | Chevy's Nightclub alcohol petition (consent item 3)      | Objection call                                   | No objections                                        | [00:41:48] |
 | Consent agenda items 1 to 22 plus 23 and 25              | Moved by Clark, seconded by Smith Rice           | Passed; clerk: "unanimous with Mr. Garrett absent"   | [00:44:41] |
-| Sole source $78,695, Downtown Decoration Inc. tree       | Moved by Clark, seconded by Guilford             | Carried with Garrett out                             | [00:51:05] |
+| Sole source $78,695, Downtown Decoration Inc. tree       | Moved by Clark, seconded by Guilfoyle            | Carried with Garrett out                             | [00:51:05] |
 | Executive session (litigation, real estate, personnel)   | Moved by Clark, seconded by Smith Rice           | Carried with Garrett out                             | [00:59:44] |
 
 ## Discussion by Agenda Item
@@ -128,6 +128,7 @@ estimated_reading_time: 6
 * Commissioner Wimberly appears as "Wembley", "Wimberley", "Wimberly", and "London Wimberly"; this summary uses Wimberly.
 * Commissioner Pulliam appears as "Pullian", "Pulliam", and "Bullion"; this summary uses Pulliam.
 * Delegate Nabholz appears as "Nabolholz", "Nabolz", and "Navholz"; this summary uses Nabholz. Dunaway also appears as "Donna way" and "Dunnaway".
+* Mayor Pro Tem Wayne Guilfoyle appears as "Guilford"; this summary uses Guilfoyle.
 * "Keevesville" refers to Keysville. "Mr. Garrett" was absent for every recorded vote.
 * No speaker labels. Staff in the tree discussion are identified only as "Director" and "Director Williams."
 * Mic testing and crosstalk at [00:09:15] to [00:09:50] and the vote roll call around [00:44:14] to [00:44:41] are partly garbled.
